@@ -56,7 +56,7 @@
                         text = "?";
                     }
 
-                    var baseId = text.replace(/\s+/g, "_"), suffix = "", count = 1;
+                    var baseId = text.replace(/[^A-Z0-9]+/ig, "_"), suffix = "", count = 1;
 
                     while (document.getElementById(baseId + suffix) !== null) {
                         suffix = "_" + count++;
