@@ -5,7 +5,7 @@ Plugin class    : table_of_contents
 Plugin uri      : https://sikido.vn
 Description     : Tạo mục lục tự động cho bài viết
 Author          : SKDSoftware Dev Team
-Version         : 1.0.0
+Version         : 1.0.1
  */
 define( 'TOC_NAME', 'table-of-contents' );
 
