@@ -5,27 +5,35 @@ Plugin class    : table_of_contents
 Plugin uri      : https://sikido.vn
 Description     : Tạo mục lục tự động cho bài viết
 Author          : SKDSoftware Dev Team
-Version         : 1.0.1
+Version         : 1.1.0
  */
-define( 'TOC_NAME', 'table-of-contents' );
+const TOC_NAME = 'table-of-contents';
 
-define( 'TOC_PATH', Path::plugin(TOC_NAME) );
+define('TOC_PATH', Path::plugin(TOC_NAME) );
 
 class table_of_contents {
 
-    private $name = 'table_of_contents';
+    private string $name = 'table_of_contents';
 
     function __construct() {
     }
 
     //active plugin
-    public function active() {
+    public function active(): void
+    {
+        Option::update('table_of_contents_config', [
+            'enable' => 1,
+            'headings' => ['h2', 'h3', 'h4', 'h5']
+        ]);
     }
 
     //Gở bỏ plugin
-    public function uninstall() {}
+    public function uninstall(): void
+    {
+        Option::delete( 'table_of_contents_config');
+    }
 
-    static public function config($key = '') {
+    static function config($key = '') {
         $config = ['enable' => 1, 'headings' => ['h2', 'h3', 'h4', 'h5']];
         $table_of_contents_config = Option::get( 'table_of_contents_config' , $config);
         if(have_posts($table_of_contents_config)) $config = array_merge($config, $table_of_contents_config);
@@ -33,92 +41,26 @@ class table_of_contents {
         return $config;
     }
 
-    static public function assets() {
-        Template::asset()->location('footer')->add('toc', TOC_PATH.'/jquery.toc/jquery.toc.min.js');
+    static function assets(AssetPosition $header, AssetPosition $footer): void
+    {
+        $header->add('toc', TOC_PATH.'/assets/toc-style.css', ['minify' => true]);
+        $footer->add('toc', TOC_PATH.'/jquery.toc/jquery.toc.min.js');
     }
 
-    static public function render($content) {
+    static function render($content) {
+
         if(table_of_contents::config('enable') == 0) return $content;
-        $heading = table_of_contents::config('headings');
-        if(have_posts($heading)) {
-            $heading = implode(',', $heading);
-        }
-        else {
-            $heading = '';
-        }
-        ob_start();
-        ?>
-        <div class="toc-container" id="toc-container">
-            <div class="toc-header">
-                <p id="toc-header-title">NỘI DUNG BÀI VIẾT</p>
-                <div class="toc-show"><span class="fas fa-angle-up"></span></div>
-            </div>
-            <ol id="toc"></ol>
-        </div>
-        <style>
-            .toc-container {
-                border: 2px solid var(--theme-color);
-                overflow:hidden;
-                padding:10px;
-                background: rgba(243,243,243,.95);
-            }
-            .toc-container .toc-header { position: relative;}
-            .toc-container .toc-header p {
-                color:#000; font-weight: bold;
-            }
-            .toc-container .toc-header .toc-show {
-                cursor: pointer;
-                position: absolute; right: 15px; top:0px; font-style: normal;
-            }
-            .toc-container ol {
-                margin-left: 20px;
-                color: #333;
-                background: rgba(243,243,243,.95);
-                list-style: decimal;
-            }
-            .toc-container ol li {
-                counter-increment: List!important;
-            }
-            .toc-container ol li a {
-                display: block;
-                padding: 5px 10px;
-                z-index: 10;
-                overflow: hidden;
-                position: relative;
-                -webkit-transition: color .3s;
-                transition: color .3s;
-                color:#000;
-                font-weight: bold;
-                font-size: 12px;
-            }
-        </style>
-        <script defer>
-            $(function () {
-                $("#toc").toc({content:"div.object-detail-content", headings:"<?php echo $heading;?>"});
-                $(document).on('click', '#toc li a', function () {
-                    let id = $(this).attr('href');
-                    $('html, body').animate({
-                        scrollTop: $(id).offset().top - 100
-                    }, 1000);
-                    return false;
-                });
-                $(document).on('click', '#toc-container .toc-show', function () {
-                    $('#toc-container #toc').toggle();
-                    return false;
-                });
-            })
-        </script>
-        <?php
-        $productHtml = ob_get_contents();
-        ob_clean();
-        ob_end_clean();
-        return $productHtml.$content;
+
+        return tocShortCode([
+            'content_id' => '.object-detail-content'
+        ], $content);
     }
 }
 
-include_once 'toc-admin.php';
+include_once 'short-code.php';
+include_once 'admin.php';
 
 if(!Admin::is() && Template::isPage('post_detail')) {
     add_filter('the_content', 'table_of_contents::render', 1);
-    add_action('init', 'table_of_contents::assets');
+    add_action('theme_custom_assets', 'table_of_contents::assets', 10, 2);
 }
