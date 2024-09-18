@@ -58,4 +58,4 @@ Class Table_Of_Contents_Admin {
 }
 
 add_filter('skd_system_tab', 'Table_Of_Contents_Admin::registerSystem');
-add_filter('admin_system_toc_save','Table_Of_Contents_Admin::save',10,2);
+add_action('admin_system_toc_save','Table_Of_Contents_Admin::save');
